@@ -1,6 +1,6 @@
+import { useState } from 'react'
 import {
   ArrowRight,
-  BarChart3,
   CheckCircle2,
   ChevronRight,
   Droplets,
@@ -11,6 +11,7 @@ import {
   Star,
   Zap,
 } from 'lucide-react'
+import './App.css'
 
 const stats = [
   { value: '2.4M+', label: 'assets archived' },
@@ -83,7 +84,37 @@ const testimonials = [
 
 const brands = ['AETHER', 'NOVA', 'LUMA', 'MONO', 'VANTA']
 
+const demoVideoUrl = 'https://www.youtube.com/embed/ScMzIvxBSi4?autoplay=1&rel=0'
+
 function App() {
+  const [selectedPlan, setSelectedPlan] = useState(pricingPlans[1])
+  const [checkoutVisible, setCheckoutVisible] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState('card')
+  const [demoOpen, setDemoOpen] = useState(false)
+
+  const handlePlanSelect = (plan) => {
+    setSelectedPlan(plan)
+    setCheckoutVisible(true)
+    setTimeout(() => {
+      document.getElementById('checkout-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 80)
+  }
+
+  const handleBookDemo = () => {
+    setSelectedPlan(pricingPlans[1])
+    setCheckoutVisible(true)
+    setTimeout(() => {
+      document.getElementById('checkout-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 80)
+  }
+
+  const handleSecureCheckout = () => {
+    setCheckoutVisible(true)
+    setTimeout(() => {
+      document.getElementById('checkout-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 80)
+  }
+
   return (
     <div className="page-shell">
       <header className="topbar">
@@ -101,7 +132,7 @@ function App() {
           <a href="#reviews">Reviews</a>
         </nav>
 
-        <button className="nav-cta" type="button">
+        <button className="nav-cta" type="button" onClick={handleBookDemo}>
           Book a demo
         </button>
       </header>
@@ -126,10 +157,10 @@ function App() {
                 Get started
                 <ArrowRight size={18} />
               </a>
-              <a href="#demo" className="secondary-btn">
+              <button type="button" className="secondary-btn" onClick={() => setDemoOpen(true)}>
                 <Play size={16} />
                 Watch demo
-              </a>
+              </button>
             </div>
 
             <div className="trust-row" aria-label="Client trust indicators">
@@ -280,11 +311,94 @@ function App() {
                     </li>
                   ))}
                 </ul>
-                <button type="button" className={isFeatured ? 'price-button featured-button' : 'price-button'}>
-                  Choose plan
+                <button
+                  type="button"
+                  className={isFeatured ? 'price-button featured-button' : 'price-button'}
+                  onClick={() => handlePlanSelect({ name, price, description, features, isFeatured })}
+                >
+                  {selectedPlan?.name === name ? 'Selected' : 'Buy'}
                 </button>
               </article>
             ))}
+          </div>
+
+          <div className="checkout-panel" id="checkout-panel" aria-live="polite">
+            {checkoutVisible && selectedPlan ? (
+              <>
+                <div className="checkout-copy">
+                  <span className="eyebrow dark">Selected plan</span>
+                  <h3>{selectedPlan.name}</h3>
+                  <p>{selectedPlan.description}</p>
+                </div>
+
+                <div className="checkout-price-box">
+                  <span>Today</span>
+                  <strong>{selectedPlan.price}</strong>
+                  <small>/month</small>
+                </div>
+
+                <button type="button" className="primary-btn checkout-btn" onClick={handleSecureCheckout}>
+                  Pay now
+                  <ArrowRight size={18} />
+                </button>
+
+                <div className="payment-panel">
+                  <div className="payment-methods" aria-label="Payment methods">
+                    <button
+                      type="button"
+                      className={paymentMethod === 'card' ? 'method-btn active' : 'method-btn'}
+                      onClick={() => setPaymentMethod('card')}
+                    >
+                      Card
+                    </button>
+                    <button
+                      type="button"
+                      className={paymentMethod === 'paypal' ? 'method-btn active' : 'method-btn'}
+                      onClick={() => setPaymentMethod('paypal')}
+                    >
+                      PayPal
+                    </button>
+                  </div>
+
+                  {paymentMethod === 'card' ? (
+                    <div className="checkout-form">
+                      <label>
+                        Card number
+                        <input type="text" value="4242 4242 4242 4242" readOnly aria-label="Card number" />
+                      </label>
+                      <div className="field-row">
+                        <label>
+                          Expiry
+                          <input type="text" value="12/29" readOnly aria-label="Expiry date" />
+                        </label>
+                        <label>
+                          CVC
+                          <input type="text" value="248" readOnly aria-label="Security code" />
+                        </label>
+                      </div>
+                      <label>
+                        Cardholder name
+                        <input type="text" value="ALEX MORGAN" readOnly aria-label="Cardholder name" />
+                      </label>
+                    </div>
+                  ) : (
+                    <div className="paypal-box">
+                      <div className="paypal-icon">P</div>
+                      <div>
+                        <strong>PayPal checkout</strong>
+                        <span>Secure account payment</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="checkout-empty-state">
+                <span className="eyebrow dark">Choose a plan</span>
+                <h3>Select a pricing tier to unlock checkout.</h3>
+                <p>Pick any plan above and press Buy to open the payment form.</p>
+              </div>
+            )}
           </div>
         </section>
 
@@ -321,7 +435,7 @@ function App() {
               <span className="eyebrow dark">Ready to launch</span>
               <h2>Build a digital archive your clients will remember.</h2>
             </div>
-            <button type="button" className="primary-btn large-btn">
+            <button type="button" className="primary-btn large-btn" onClick={handleBookDemo}>
               Start your project
               <ArrowRight size={18} />
             </button>
@@ -342,6 +456,24 @@ function App() {
           <a href="#reviews">Reviews</a>
         </div>
       </footer>
+
+      {demoOpen && (
+        <div className="demo-modal-backdrop" onClick={() => setDemoOpen(false)}>
+          <div className="demo-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
+            <button type="button" className="demo-close-button" aria-label="Close demo video" onClick={() => setDemoOpen(false)}>
+              ×
+            </button>
+            <div className="demo-modal-frame">
+              <iframe
+                src={demoVideoUrl}
+                title="Liquid Archive product demo"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
