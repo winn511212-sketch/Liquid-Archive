@@ -1,481 +1,329 @@
-import { useState } from 'react'
-import {
-  ArrowRight,
-  CheckCircle2,
-  ChevronRight,
-  Droplets,
-  Layers3,
-  Play,
-  ShieldCheck,
-  Sparkles,
-  Star,
-  Zap,
-} from 'lucide-react'
-import './App.css'
+import { useState, useEffect } from 'react'
 
-const stats = [
-  { value: '2.4M+', label: 'assets archived' },
-  { value: '99.98%', label: 'delivery uptime' },
-  { value: '4.9/5', label: 'client satisfaction' },
+const css = `
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&display=swap');
+:root[data-theme='light'] { --bg:#e3e8ef; --hi:#fff; --lo:#b8c0cf; --tx:#2d3446; --mut:#7a8499; --ac:#5b6cff; --red:#f0506e; --ok:#12b886; --ov:rgba(60,70,90,.45) }
+:root[data-theme='dark'] { --bg:#252a36; --hi:#303646; --lo:#1a1e27; --tx:#e6e9f2; --mut:#8d96ab; --ac:#8b97ff; --red:#ff7a93; --ok:#38d9a9; --ov:rgba(8,10,16,.65) }
+:root { --out:8px 8px 16px var(--lo),-8px -8px 16px var(--hi); --sm:4px 4px 8px var(--lo),-4px -4px 8px var(--hi); --in:inset 4px 4px 8px var(--lo),inset -4px -4px 8px var(--hi) }
+* { box-sizing:border-box; margin:0 }
+body { background:var(--bg); color:var(--tx); font-family:'Sora',system-ui,sans-serif; min-height:100vh; transition:background .3s }
+button, input, select { font:inherit; color:var(--tx) }
+button { background:var(--bg); border:0; cursor:pointer }
+button:focus-visible, input:focus-visible, select:focus-visible { outline:2px solid var(--ac); outline-offset:3px }
+.app { max-width:1240px; margin:0 auto; padding:24px 20px 80px }
+.bar { display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:28px }
+.logo { font-size:1.7rem; font-weight:800; letter-spacing:-.03em; margin-right:auto }
+.logo span { color:var(--ac) }
+.field { padding:12px 16px; border:0; border-radius:16px; background:var(--bg); box-shadow:var(--in); width:100% }
+.search { flex:1 1 260px; max-width:420px }
+.btn { padding:11px 18px; border-radius:16px; font-weight:600; box-shadow:var(--sm); position:relative; transition:box-shadow .15s }
+.btn:active, .btn.on { box-shadow:var(--in) } .btn.on { color:var(--ac) }
+.btn.main { color:var(--ac) } .btn:disabled { opacity:.45; cursor:not-allowed }
+.badge { position:absolute; top:-8px; right:-8px; min-width:22px; height:22px; border-radius:99px; background:var(--ac); color:#fff; font-size:.7rem; display:grid; place-items:center; padding:0 6px }
+.card { background:var(--bg); border-radius:26px; padding:24px; box-shadow:var(--out) }
+.hero { display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap; margin-bottom:30px }
+.hero h1 { font-size:clamp(1.5rem,3vw,2.2rem); font-weight:800; letter-spacing:-.03em; max-width:560px }
+.hero p { color:var(--mut); margin-top:10px; font-size:.9rem }
+.hero code { padding:3px 10px; border-radius:10px; box-shadow:var(--in); color:var(--ac); font-weight:600 }
+.hero .big { font-size:4.5rem; width:130px; height:130px; display:grid; place-items:center; border-radius:50%; box-shadow:var(--in) }
+.shop { display:grid; grid-template-columns:260px 1fr; gap:28px; align-items:start }
+.side { position:sticky; top:16px; display:grid; gap:20px }
+.side h3 { font-size:.85rem; color:var(--mut); font-weight:600; margin-bottom:10px }
+.cats { display:grid; gap:10px }
+.cats .btn { text-align:left; padding:10px 14px; font-size:.85rem; font-weight:400 }
+.cats .btn.on { font-weight:600 }
+.row { display:flex; justify-content:space-between; align-items:center; gap:10px }
+.chk { display:flex; align-items:center; gap:10px; font-size:.85rem; cursor:pointer }
+.chk input { appearance:none; width:22px; height:22px; border-radius:7px; box-shadow:var(--in); background:var(--bg); display:grid; place-items:center; cursor:pointer }
+.chk input:checked::after { content:'✓'; color:var(--ac); font-weight:800; font-size:.8rem }
+input[type=range] { -webkit-appearance:none; appearance:none; width:100%; height:12px; border-radius:99px; background:var(--bg); box-shadow:var(--in) }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:24px; height:24px; border-radius:50%; background:var(--bg); box-shadow:var(--sm); border:3px solid var(--ac) }
+input[type=range]::-moz-range-thumb { width:18px; height:18px; border-radius:50%; background:var(--bg); border:3px solid var(--ac) }
+.top { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; gap:12px; flex-wrap:wrap }
+.top span { color:var(--mut); font-size:.85rem } .top select { width:auto; padding:10px 14px }
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:26px }
+.prod { padding:18px; display:flex; flex-direction:column }
+.pic { position:relative; height:140px; border-radius:20px; box-shadow:var(--in); display:grid; place-items:center; font-size:4rem; cursor:pointer; margin-bottom:14px }
+.off { position:absolute; top:10px; left:10px; background:var(--red); color:#fff; font-size:.68rem; font-weight:600; padding:3px 9px; border-radius:99px }
+.heart { position:absolute; top:6px; right:6px; width:36px; height:36px; border-radius:50%; box-shadow:var(--sm); font-size:1.05rem; color:var(--mut) } .heart.on { color:var(--red) }
+.prod h4 { font-size:.92rem; cursor:pointer } .prod .meta { font-size:.74rem; color:var(--mut); margin:4px 0 10px }
+.stars { color:#f5a623; letter-spacing:1px }
+.price { font-weight:800; font-size:1.02rem } .old { font-size:.75rem; color:var(--mut); text-decoration:line-through; margin-left:6px; font-weight:400 }
+.prod .row:last-child { margin-top:auto; padding-top:14px }
+.empty { text-align:center; color:var(--mut); padding:50px 10px }
+.ov { position:fixed; inset:0; background:var(--ov); z-index:50; display:grid; place-items:center; padding:16px }
+.ov.right { place-items:stretch end; padding:0 }
+.modal { width:min(720px,100%); max-height:92vh; overflow:auto; display:grid; grid-template-columns:1fr 1fr; gap:26px }
+.modal .pic { height:260px; font-size:7rem; cursor:default; margin:0 }
+.modal h2 { font-size:1.35rem; margin:6px 0 8px } .modal p { color:var(--mut); font-size:.88rem; line-height:1.6; margin:12px 0 }
+.qty { display:inline-flex; align-items:center; gap:12px } .qty b { min-width:22px; text-align:center }
+.qty button { width:34px; height:34px; border-radius:11px; box-shadow:var(--sm); font-weight:800 }
+.drawer { width:min(440px,100%); height:100vh; border-radius:26px 0 0 26px; overflow:auto; display:flex; flex-direction:column; gap:16px }
+.drawer h2 { display:flex; justify-content:space-between; align-items:center; font-size:1.15rem }
+.x { width:36px; height:36px; border-radius:12px; box-shadow:var(--sm); font-size:1.1rem }
+.item { display:grid; grid-template-columns:54px 1fr; gap:14px; align-items:center; padding:12px; border-radius:18px; box-shadow:var(--sm) }
+.item .pic { height:54px; font-size:1.8rem; margin:0; border-radius:14px }
+.item h4 { font-size:.85rem } .item .row { margin-top:8px }
+.sum { display:grid; gap:10px; font-size:.88rem; padding-top:6px } .sum .row span:first-child { color:var(--mut) }
+.sum .tot { font-size:1.15rem; font-weight:800 } .sum .tot span:first-child { color:var(--tx) }
+.promo { display:flex; gap:10px } .promo .field { padding:10px 14px }
+.err { color:var(--red); font-size:.74rem; margin-top:5px }
+.form { display:grid; gap:14px } .form label { font-size:.78rem; color:var(--mut); display:block; margin-bottom:6px }
+.done { text-align:center; padding:30px 0; display:grid; gap:12px; justify-items:center } .done .big { font-size:4rem }
+.toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); z-index:80; padding:13px 22px; border-radius:16px; background:var(--bg); box-shadow:var(--out); font-size:.88rem; font-weight:600 }
+@media (max-width:860px) { .shop { grid-template-columns:1fr } .side { position:static } .modal { grid-template-columns:1fr } .modal .pic { height:180px; font-size:5rem } }
+@media (prefers-reduced-motion:reduce) { * { transition:none !important } }
+`
+
+const P = [
+  { id: 1, n: 'Simsiz quloqchin Pro', c: 'Elektronika', p: 690000, o: 890000, r: 4.7, s: 14, e: '🎧', d: 'Shovqinni yo‘qotish, 30 soatlik batareya va tez zaryadlash.' },
+  { id: 2, n: 'Smart soat Fit 3', c: 'Elektronika', p: 1290000, o: 1590000, r: 4.5, s: 8, e: '⌚', d: 'Yurak urishi, uyqu va qadamlarni kuzatadi. Suvdan himoyalangan.' },
+  { id: 3, n: 'Portativ kolonka Mini', c: 'Elektronika', p: 420000, o: 0, r: 4.3, s: 25, e: '🔊', d: 'Cho‘ntakka sig‘adigan, 12 soat ishlaydigan Bluetooth kolonka.' },
+  { id: 4, n: 'Mexanik klaviatura', c: 'Elektronika', p: 780000, o: 950000, r: 4.8, s: 6, e: '⌨️', d: 'Yorug‘likli tugmalar, tez javob beruvchi mexanik switch.' },
+  { id: 5, n: 'Planshet Tab 11', c: 'Elektronika', p: 3450000, o: 3900000, r: 4.6, s: 5, e: '📱', d: '11 dyuymli ekran, 128 GB xotira, o‘qish va ko‘rish uchun ideal.' },
+  { id: 6, n: 'Qishki kurtka', c: 'Kiyim', p: 960000, o: 1250000, r: 4.4, s: 12, e: '🧥', d: 'Sovuqdan va shamoldan himoya qiladi, yengil va iliq.' },
+  { id: 7, n: 'Klassik krossovka', c: 'Kiyim', p: 540000, o: 0, r: 4.2, s: 30, e: '👟', d: 'Kundalik kiyish uchun qulay, yengil taglik.' },
+  { id: 8, n: 'Paxtali futbolka', c: 'Kiyim', p: 120000, o: 150000, r: 4.1, s: 60, e: '👕', d: '100% paxta, yuvilganda shakli buzilmaydi.' },
+  { id: 9, n: 'Quyosh ko‘zoynagi', c: 'Kiyim', p: 230000, o: 0, r: 4.0, s: 18, e: '🕶️', d: 'UV-400 himoyasi, engil ramka.' },
+  { id: 10, n: 'Kofe mashinasi', c: 'Uy-ro‘zg‘or', p: 1850000, o: 2200000, r: 4.7, s: 7, e: '☕', d: 'Bir tugma bilan espresso va kapuchino tayyorlaydi.' },
+  { id: 11, n: 'Aqlli chiroq', c: 'Uy-ro‘zg‘or', p: 180000, o: 0, r: 4.4, s: 40, e: '💡', d: 'Telefondan rangi va yorqinligi boshqariladi.' },
+  { id: 12, n: 'Robot changyutgich', c: 'Uy-ro‘zg‘or', p: 2990000, o: 3600000, r: 4.5, s: 4, e: '🤖', d: 'Xona xaritasini tuzadi va o‘zi tozalaydi.' },
+  { id: 13, n: 'Termos 1 litr', c: 'Uy-ro‘zg‘or', p: 160000, o: 0, r: 4.6, s: 35, e: '🧴', d: 'Issiqni 12 soat, sovuqni 24 soat saqlaydi.' },
+  { id: 14, n: 'Yoga gilami', c: 'Sport', p: 190000, o: 240000, r: 4.3, s: 22, e: '🧘', d: 'Sirpanmaydigan, qalinligi 8 mm.' },
+  { id: 15, n: 'Gantel to‘plami', c: 'Sport', p: 480000, o: 0, r: 4.5, s: 10, e: '🏋️', d: 'Sozlanadigan og‘irlik, 2 dan 10 kg gacha.' },
+  { id: 16, n: 'Velosiped dubulg‘asi', c: 'Sport', p: 310000, o: 380000, r: 4.2, s: 0, e: '⛑️', d: 'Yengil, shamollatish teshiklari bilan. Hozir tugagan.' },
 ]
+const CATS = ['Hammasi', 'Elektronika', 'Kiyim', 'Uy-ro‘zg‘or', 'Sport']
+const money = n => Math.round(n).toLocaleString('ru-RU') + ' so‘m'
+const stars = r => '★'.repeat(Math.round(r)) + '☆'.repeat(5 - Math.round(r))
+const byId = id => P.find(x => x.id === id)
 
-const features = [
-  {
-    icon: Layers3,
-    title: 'Unified media vault',
-    description: 'Keep campaigns, reels, brand files and approvals in one premium archive that feels effortless to manage.',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Secure access control',
-    description: 'Set role-based permissions, watermarking and review checkpoints to protect what matters most.',
-  },
-  {
-    icon: Zap,
-    title: 'Instant search + retrieval',
-    description: 'Find any asset in seconds with AI-powered search, smart tagging and version history.',
-  },
-]
+const useStore = (key, init) => {
+  const [v, setV] = useState(() => { try { return JSON.parse(localStorage.getItem(key)) ?? init } catch { return init } })
+  useEffect(() => { try { localStorage.setItem(key, JSON.stringify(v)) } catch {} }, [key, v])
+  return [v, setV]
+}
 
-const collections = [
-  { title: 'Brand systems', tag: 'Design', accent: 'sunset' },
-  { title: 'Campaign refreshes', tag: 'Marketing', accent: 'violet' },
-  { title: 'Motion libraries', tag: 'Video', accent: 'ice' },
-]
+export default function App() {
+  const [dark, setDark] = useStore('ns-dark', false)
+  const [cart, setCart] = useStore('ns-cart', {})
+  const [wish, setWish] = useStore('ns-wish', [])
+  const [orders, setOrders] = useStore('ns-orders', [])
+  const [q, setQ] = useState('')
+  const [cat, setCat] = useState('Hammasi')
+  const [sort, setSort] = useState('pop')
+  const [max, setMax] = useState(4000000)
+  const [stock, setStock] = useState(false)
+  const [onlyWish, setOnlyWish] = useState(false)
+  const [modal, setModal] = useState(null)
+  const [mq, setMq] = useState(1)
+  const [drawer, setDrawer] = useState(false)
+  const [step, setStep] = useState('cart')
+  const [promo, setPromo] = useState('')
+  const [promoOk, setPromoOk] = useState(false)
+  const [toast, setToast] = useState('')
+  const [form, setForm] = useState({ name: '', phone: '', addr: '' })
+  const [errs, setErrs] = useState({})
+  const [last, setLast] = useState('')
 
-const pricingPlans = [
-  {
-    name: 'Starter',
-    price: '$29',
-    description: 'For independent creators and fast-moving studios.',
-    features: ['10 shared collections', 'Smart tagging', 'Brand-safe sharing'],
-    isFeatured: false,
-  },
-  {
-    name: 'Studio',
-    price: '$79',
-    description: 'For teams that need premium level flow and control.',
-    features: ['Unlimited projects', 'Approval workflows', 'Priority support'],
-    isFeatured: true,
-  },
-  {
-    name: 'Enterprise',
-    price: 'Custom',
-    description: 'Built for large-scale creative operations and compliance.',
-    features: ['Custom onboarding', 'SSO and security reviews', 'Dedicated success manager'],
-    isFeatured: false,
-  },
-]
+  useEffect(() => { document.documentElement.dataset.theme = dark ? 'dark' : 'light' }, [dark])
+  useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(''), 1800); return () => clearTimeout(t) }, [toast])
 
-const testimonials = [
-  {
-    quote:
-      'Liquid Archive turned our chaotic delivery process into a premium system our team actually enjoys using.',
-    name: 'Nina Sol',
-    role: 'Creative Director, Vanta House',
-  },
-  {
-    quote:
-      'We cut down asset retrieval time from hours to minutes and the client experience immediately felt more elevated.',
-    name: 'Dorian Lee',
-    role: 'Managing Partner, Northline Studio',
-  },
-]
-
-const brands = ['AETHER', 'NOVA', 'LUMA', 'MONO', 'VANTA']
-
-const demoVideoUrl = 'https://www.youtube.com/embed/ScMzIvxBSi4?autoplay=1&rel=0'
-
-function App() {
-  const [selectedPlan, setSelectedPlan] = useState(pricingPlans[1])
-  const [checkoutVisible, setCheckoutVisible] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState('card')
-  const [demoOpen, setDemoOpen] = useState(false)
-
-  const handlePlanSelect = (plan) => {
-    setSelectedPlan(plan)
-    setCheckoutVisible(true)
-    setTimeout(() => {
-      document.getElementById('checkout-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    }, 80)
+  const add = (id, n = 1) => {
+    const p = byId(id), cur = cart[id] || 0
+    if (cur >= p.s) return setToast('Omborda bundan ortiq yo‘q')
+    setCart({ ...cart, [id]: Math.min(p.s, cur + n) }); setToast(p.n + ' savatga qo‘shildi')
   }
-
-  const handleBookDemo = () => {
-    setSelectedPlan(pricingPlans[1])
-    setCheckoutVisible(true)
-    setTimeout(() => {
-      document.getElementById('checkout-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    }, 80)
+  const change = (id, d) => {
+    const n = (cart[id] || 0) + d
+    if (n > byId(id).s) return setToast('Omborda bundan ortiq yo‘q')
+    const c = { ...cart }; if (n <= 0) delete c[id]; else c[id] = n; setCart(c)
   }
+  const like = id => setWish(w => w.includes(id) ? w.filter(x => x !== id) : [...w, id])
 
-  const handleSecureCheckout = () => {
-    setCheckoutVisible(true)
-    setTimeout(() => {
-      document.getElementById('checkout-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    }, 80)
+  let list = P.filter(p => (cat === 'Hammasi' || p.c === cat) && p.p <= max && (!stock || p.s > 0) && (!onlyWish || wish.includes(p.id)) && p.n.toLowerCase().includes(q.trim().toLowerCase()))
+  list = [...list].sort((a, b) => sort === 'cheap' ? a.p - b.p : sort === 'exp' ? b.p - a.p : sort === 'rate' ? b.r - a.r : a.id - b.id)
+
+  const items = Object.entries(cart).map(([id, n]) => ({ p: byId(+id), n }))
+  const count = items.reduce((s, i) => s + i.n, 0)
+  const sub = items.reduce((s, i) => s + i.p.p * i.n, 0)
+  const disc = promoOk ? sub * 0.1 : 0
+  const ship = sub === 0 || sub - disc >= 500000 ? 0 : 25000
+  const total = sub - disc + ship
+
+  const applyPromo = () => {
+    if (promo.trim().toUpperCase() === 'CHEGIRMA10') { setPromoOk(true); setToast('Promokod qo‘llandi: −10%') } else setToast('Promokod noto‘g‘ri')
   }
+  const order = () => {
+    const e = {}
+    if (form.name.trim().length < 2) e.name = 'Ismingizni yozing'
+    if (form.phone.replace(/\D/g, '').length < 9) e.phone = 'Telefon raqami kamida 9 ta raqam bo‘lsin'
+    if (form.addr.trim().length < 5) e.addr = 'Manzilni to‘liqroq yozing'
+    setErrs(e)
+    if (Object.keys(e).length) return
+    const no = 'NS-' + Date.now().toString().slice(-6)
+    setOrders([{ no, total, count, date: new Date().toLocaleDateString('uz-UZ'), items: items.map(i => i.p.e + ' ' + i.p.n + ' × ' + i.n) }, ...orders])
+    setLast(no); setCart({}); setPromo(''); setPromoOk(false); setStep('done')
+  }
+  const openDrawer = s => { setStep(s); setDrawer(true) }
 
   return (
-    <div className="page-shell">
-      <header className="topbar">
-        <div className="brand" aria-label="Liquid Archive home">
-          <span className="brand-mark">
-            <Droplets size={18} />
-          </span>
-          Liquid Archive
-        </div>
-
-        <nav className="nav" aria-label="Main navigation">
-          <a href="#features">Features</a>
-          <a href="#collections">Collections</a>
-          <a href="#pricing">Pricing</a>
-          <a href="#reviews">Reviews</a>
-        </nav>
-
-        <button className="nav-cta" type="button" onClick={handleBookDemo}>
-          Book a demo
-        </button>
+    <div className="app">
+      <style>{css}</style>
+      <header className="bar">
+        <div className="logo">Neo<span>Shop</span></div>
+        <input className="field search" placeholder="Mahsulot qidirish" value={q} onChange={e => setQ(e.target.value)} aria-label="Qidirish" />
+        <button className="btn" onClick={() => setDark(!dark)}>{dark ? 'Kun' : 'Tun'}</button>
+        <button className="btn" onClick={() => openDrawer('orders')}>Buyurtmalar</button>
+        <button className="btn main" onClick={() => openDrawer('cart')}>Savat{count > 0 && <span className="badge">{count}</span>}</button>
       </header>
 
-      <main className="content">
-        <section className="hero section">
-          <div className="hero-copy">
-            <span className="eyebrow">
-              <Sparkles size={16} />
-              Premium asset management for creative teams
-            </span>
+      <section className="card hero">
+        <div>
+          <h1>Yangi fasl, yangi narxlar. Ko‘p mahsulotga 25% gacha chegirma.</h1>
+          <p>Savatda <code>CHEGIRMA10</code> promokodini yozing va qo‘shimcha 10% tejang. 500 000 so‘mdan ortiq xaridga yetkazib berish bepul.</p>
+        </div>
+        <div className="big">🛍️</div>
+      </section>
 
-            <h1>Turn your digital workspace into a luxury archive.</h1>
-
-            <p className="hero-text">
-              Store, organize and deliver every brand asset faster with a polished system built for teams who care about speed,
-              consistency and status.
-            </p>
-
-            <div className="cta-row">
-              <a href="#pricing" className="primary-btn">
-                Get started
-                <ArrowRight size={18} />
-              </a>
-              <button type="button" className="secondary-btn" onClick={() => setDemoOpen(true)}>
-                <Play size={16} />
-                Watch demo
-              </button>
-            </div>
-
-            <div className="trust-row" aria-label="Client trust indicators">
-              <span>Trusted by modern studios</span>
-              <div className="brand-strip" aria-hidden="true">
-                {brands.map((brand) => (
-                  <span key={brand}>{brand}</span>
-                ))}
-              </div>
+      <div className="shop">
+        <aside className="side">
+          <div className="card">
+            <h3>Kategoriya</h3>
+            <div className="cats">
+              {CATS.map(c => <button key={c} className={'btn ' + (cat === c ? 'on' : '')} onClick={() => setCat(c)}>{c}</button>)}
             </div>
           </div>
-
-          <div className="hero-visual" id="demo" aria-label="Product preview dashboard">
-            <div className="dashboard-window">
-              <div className="window-header">
-                <div className="window-dots">
-                  <span />
-                  <span />
-                  <span />
-                </div>
-                <span className="window-label">liquid archive</span>
-              </div>
-
-              <div className="dashboard-body">
-                <div className="mini-metrics">
-                  <div className="mini-card">
-                    <span>Files indexed</span>
-                    <strong>24.8k</strong>
-                  </div>
-                  <div className="mini-card accent">
-                    <span>Active team</span>
-                    <strong>148</strong>
-                  </div>
-                </div>
-
-                <div className="chart-panel">
-                  <div className="chart-header">
-                    <span>Archive health</span>
-                    <span className="positive">+18.2%</span>
-                  </div>
-                  <div className="bars" aria-hidden="true">
-                    <span style={{ height: '38%' }} />
-                    <span style={{ height: '52%' }} />
-                    <span style={{ height: '68%' }} />
-                    <span style={{ height: '84%' }} />
-                    <span style={{ height: '60%' }} />
-                    <span style={{ height: '92%' }} />
-                    <span style={{ height: '100%' }} />
-                  </div>
-                </div>
-
-                <div className="asset-list">
-                  {['Campaign kit', 'Brand system', 'Motion reel', 'Client assets'].map((item, index) => (
-                    <div className="asset-item" key={item}>
-                      <div className="asset-badge">{index + 1}</div>
-                      <div>
-                        <strong>{item}</strong>
-                        <small>Updated 2h ago</small>
-                      </div>
-                      <span className="status">Ready</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+          <div className="card">
+            <h3>Narx: {money(max)} gacha</h3>
+            <input type="range" min="100000" max="4000000" step="50000" value={max} onChange={e => setMax(+e.target.value)} aria-label="Maksimal narx" />
+            <div style={{ display: 'grid', gap: 14, marginTop: 20 }}>
+              <label className="chk"><input type="checkbox" checked={stock} onChange={e => setStock(e.target.checked)} />Faqat mavjudlari</label>
+              <label className="chk"><input type="checkbox" checked={onlyWish} onChange={e => setOnlyWish(e.target.checked)} />Sevimlilar ({wish.length})</label>
             </div>
           </div>
-        </section>
+        </aside>
 
-        <section className="stats-grid section-sm">
-          {stats.map((stat) => (
-            <div className="stat-card" key={stat.label}>
-              <strong>{stat.value}</strong>
-              <span>{stat.label}</span>
-            </div>
-          ))}
-        </section>
-
-        <section className="features section" id="features">
-          <div className="section-heading">
-            <span className="eyebrow dark">Built for clarity and speed</span>
-            <h2>Everything your creative operation needs to scale.</h2>
+        <main>
+          <div className="top">
+            <span>{list.length} ta mahsulot topildi</span>
+            <select className="field" value={sort} onChange={e => setSort(e.target.value)} aria-label="Saralash">
+              <option value="pop">Odatiy tartib</option>
+              <option value="cheap">Avval arzonlari</option>
+              <option value="exp">Avval qimmatlari</option>
+              <option value="rate">Reyting bo‘yicha</option>
+            </select>
           </div>
-
-          <div className="feature-grid">
-            {features.map(({ icon: Icon, title, description }) => (
-              <div className="feature-card" key={title}>
-                <div className="icon-wrap">
-                  <Icon size={20} />
-                </div>
-                <h3>{title}</h3>
-                <p>{description}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="spotlight section" id="collections">
-          <div className="spotlight-copy">
-            <span className="eyebrow dark">Collections that feel premium</span>
-            <h2>Organize every creative layer without losing momentum.</h2>
-            <p>
-              Create structured archives for campaigns, ever-growing visual libraries and client deliverables without sacrificing clarity.
-            </p>
-            <ul className="check-list">
-              {['Granular access levels', 'Version-aware approvals', 'Fast delivery workflows'].map((item) => (
-                <li key={item}>
-                  <CheckCircle2 size={18} />
-                  {item}
-                </li>
+          {list.length === 0 ? (
+            <div className="card empty">Hech narsa topilmadi. Filtrlarni o‘zgartirib ko‘ring.</div>
+          ) : (
+            <div className="grid">
+              {list.map(p => (
+                <article className="card prod" key={p.id}>
+                  <div className="pic" onClick={() => { setModal(p.id); setMq(1) }}>
+                    {p.e}
+                    {p.o > 0 && <span className="off">−{Math.round((1 - p.p / p.o) * 100)}%</span>}
+                    <button className={'heart ' + (wish.includes(p.id) ? 'on' : '')} aria-label="Sevimli" onClick={e => { e.stopPropagation(); like(p.id) }}>{wish.includes(p.id) ? '♥' : '♡'}</button>
+                  </div>
+                  <h4 onClick={() => { setModal(p.id); setMq(1) }}>{p.n}</h4>
+                  <div className="meta"><span className="stars">{stars(p.r)}</span> {p.r} · {p.s > 0 ? p.s + ' ta bor' : 'Tugagan'}</div>
+                  <div className="row">
+                    <div className="price">{money(p.p)}{p.o > 0 && <span className="old">{money(p.o)}</span>}</div>
+                  </div>
+                  <div className="row">
+                    <button className="btn main" style={{ width: '100%' }} disabled={p.s === 0} onClick={() => add(p.id)}>{p.s === 0 ? 'Tugagan' : 'Savatga'}</button>
+                  </div>
+                </article>
               ))}
-            </ul>
-          </div>
+            </div>
+          )}
+        </main>
+      </div>
 
-          <div className="collection-grid">
-            {collections.map(({ title, tag, accent }) => (
-              <article className={`collection-card ${accent}`} key={title}>
-                <span className="collection-tag">{tag}</span>
-                <h3>{title}</h3>
-                <div className="collection-footer">
-                  <span>Open collection</span>
-                  <ChevronRight size={18} />
+      {modal && (() => { const p = byId(modal); return (
+        <div className="ov" onClick={() => setModal(null)}>
+          <div className="card modal" onClick={e => e.stopPropagation()} role="dialog" aria-label={p.n}>
+            <div className="pic">{p.e}</div>
+            <div>
+              <div className="row"><span className="stars">{stars(p.r)} {p.r}</span><button className="x" onClick={() => setModal(null)} aria-label="Yopish">×</button></div>
+              <h2>{p.n}</h2>
+              <div className="price">{money(p.p)}{p.o > 0 && <span className="old">{money(p.o)}</span>}</div>
+              <p>{p.d}</p>
+              <div className="meta" style={{ fontSize: '.8rem', color: 'var(--mut)', marginBottom: 18 }}>Kategoriya: {p.c} · Omborda: {p.s} ta</div>
+              {p.s > 0 ? (
+                <div className="row">
+                  <div className="qty"><button onClick={() => setMq(Math.max(1, mq - 1))}>−</button><b>{mq}</b><button onClick={() => setMq(Math.min(p.s, mq + 1))}>+</button></div>
+                  <button className="btn main" onClick={() => { add(p.id, mq); setModal(null) }}>Savatga · {money(p.p * mq)}</button>
                 </div>
-              </article>
-            ))}
+              ) : <div className="err">Bu mahsulot hozir tugagan</div>}
+            </div>
           </div>
-        </section>
+        </div>
+      ) })()}
 
-        <section className="section pricing" id="pricing">
-          <div className="section-heading center">
-            <span className="eyebrow dark">Simple pricing</span>
-            <h2>Choose the plan that fits your creative flow.</h2>
-          </div>
+      {drawer && (
+        <div className="ov right" onClick={() => setDrawer(false)}>
+          <div className="card drawer" onClick={e => e.stopPropagation()}>
+            <h2>{step === 'cart' ? 'Savat' : step === 'form' ? 'Buyurtma berish' : step === 'orders' ? 'Buyurtmalarim' : 'Rahmat'}<button className="x" onClick={() => setDrawer(false)} aria-label="Yopish">×</button></h2>
 
-          <div className="pricing-grid">
-            {pricingPlans.map(({ name, price, description, features, isFeatured }) => (
-              <article className={`price-card ${isFeatured ? 'featured' : ''}`} key={name}>
-                <div className="price-head">
-                  <span>{name}</span>
-                  {isFeatured && <span className="badge">Most popular</span>}
-                </div>
-                <div className="price-value">{price}<small>/mo</small></div>
-                <p>{description}</p>
-                <ul>
-                  {features.map((feature) => (
-                    <li key={feature}>
-                      <CheckCircle2 size={16} />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  type="button"
-                  className={isFeatured ? 'price-button featured-button' : 'price-button'}
-                  onClick={() => handlePlanSelect({ name, price, description, features, isFeatured })}
-                >
-                  {selectedPlan?.name === name ? 'Selected' : 'Buy'}
-                </button>
-              </article>
-            ))}
-          </div>
-
-          <div className="checkout-panel" id="checkout-panel" aria-live="polite">
-            {checkoutVisible && selectedPlan ? (
-              <>
-                <div className="checkout-copy">
-                  <span className="eyebrow dark">Selected plan</span>
-                  <h3>{selectedPlan.name}</h3>
-                  <p>{selectedPlan.description}</p>
-                </div>
-
-                <div className="checkout-price-box">
-                  <span>Today</span>
-                  <strong>{selectedPlan.price}</strong>
-                  <small>/month</small>
-                </div>
-
-                <button type="button" className="primary-btn checkout-btn" onClick={handleSecureCheckout}>
-                  Pay now
-                  <ArrowRight size={18} />
-                </button>
-
-                <div className="payment-panel">
-                  <div className="payment-methods" aria-label="Payment methods">
-                    <button
-                      type="button"
-                      className={paymentMethod === 'card' ? 'method-btn active' : 'method-btn'}
-                      onClick={() => setPaymentMethod('card')}
-                    >
-                      Card
-                    </button>
-                    <button
-                      type="button"
-                      className={paymentMethod === 'paypal' ? 'method-btn active' : 'method-btn'}
-                      onClick={() => setPaymentMethod('paypal')}
-                    >
-                      PayPal
-                    </button>
+            {step === 'cart' && (items.length === 0 ? <div className="empty">Savat bo‘sh. Mahsulot tanlang.</div> : <>
+              {items.map(({ p, n }) => (
+                <div className="item" key={p.id}>
+                  <div className="pic">{p.e}</div>
+                  <div>
+                    <h4>{p.n}</h4>
+                    <div className="row">
+                      <div className="qty"><button onClick={() => change(p.id, -1)}>−</button><b>{n}</b><button onClick={() => change(p.id, 1)}>+</button></div>
+                      <span className="price" style={{ fontSize: '.85rem' }}>{money(p.p * n)}</span>
+                    </div>
                   </div>
-
-                  {paymentMethod === 'card' ? (
-                    <div className="checkout-form">
-                      <label>
-                        Card number
-                        <input type="text" value="4242 4242 4242 4242" readOnly aria-label="Card number" />
-                      </label>
-                      <div className="field-row">
-                        <label>
-                          Expiry
-                          <input type="text" value="12/29" readOnly aria-label="Expiry date" />
-                        </label>
-                        <label>
-                          CVC
-                          <input type="text" value="248" readOnly aria-label="Security code" />
-                        </label>
-                      </div>
-                      <label>
-                        Cardholder name
-                        <input type="text" value="ALEX MORGAN" readOnly aria-label="Cardholder name" />
-                      </label>
-                    </div>
-                  ) : (
-                    <div className="paypal-box">
-                      <div className="paypal-icon">P</div>
-                      <div>
-                        <strong>PayPal checkout</strong>
-                        <span>Secure account payment</span>
-                      </div>
-                    </div>
-                  )}
                 </div>
-              </>
-            ) : (
-              <div className="checkout-empty-state">
-                <span className="eyebrow dark">Choose a plan</span>
-                <h3>Select a pricing tier to unlock checkout.</h3>
-                <p>Pick any plan above and press Buy to open the payment form.</p>
+              ))}
+              <div className="promo">
+                <input className="field" placeholder="Promokod" value={promo} onChange={e => setPromo(e.target.value)} />
+                <button className="btn" onClick={applyPromo}>OK</button>
+              </div>
+              <div className="sum">
+                <div className="row"><span>Mahsulotlar</span><span>{money(sub)}</span></div>
+                {promoOk && <div className="row"><span>Promokod</span><span style={{ color: 'var(--ok)' }}>−{money(disc)}</span></div>}
+                <div className="row"><span>Yetkazib berish</span><span>{ship === 0 ? 'Bepul' : money(ship)}</span></div>
+                <div className="row tot"><span>Jami</span><span>{money(total)}</span></div>
+              </div>
+              <button className="btn main" onClick={() => setStep('form')}>Rasmiylashtirish</button>
+            </>)}
+
+            {step === 'form' && (
+              <div className="form">
+                <div><label>Ism</label><input className="field" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />{errs.name && <div className="err">{errs.name}</div>}</div>
+                <div><label>Telefon</label><input className="field" inputMode="tel" placeholder="+998 90 123 45 67" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />{errs.phone && <div className="err">{errs.phone}</div>}</div>
+                <div><label>Manzil</label><input className="field" value={form.addr} onChange={e => setForm({ ...form, addr: e.target.value })} />{errs.addr && <div className="err">{errs.addr}</div>}</div>
+                <div className="sum"><div className="row tot"><span>To‘lov (yetkazganda)</span><span>{money(total)}</span></div></div>
+                <button className="btn main" onClick={order}>Buyurtmani tasdiqlash</button>
+                <button className="btn" onClick={() => setStep('cart')}>Savatga qaytish</button>
               </div>
             )}
-          </div>
-        </section>
 
-        <section className="section testimonials" id="reviews">
-          <div className="section-heading center">
-            <span className="eyebrow dark">Loved by high-performing teams</span>
-            <h2>The confidence to ship beautiful work faster.</h2>
-          </div>
+            {step === 'done' && (
+              <div className="done">
+                <div className="big">✅</div>
+                <h3>Buyurtma qabul qilindi</h3>
+                <p style={{ color: 'var(--mut)', fontSize: '.88rem' }}>Raqami: <b style={{ color: 'var(--tx)' }}>{last}</b>. Operator tez orada qo‘ng‘iroq qiladi.</p>
+                <button className="btn main" onClick={() => setDrawer(false)}>Xaridni davom ettirish</button>
+              </div>
+            )}
 
-          <div className="testimonial-grid">
-            {testimonials.map(({ quote, name, role }) => (
-              <article className="testimonial-card" key={name}>
-                <div className="star-row" aria-label="Rating 5 out of 5">
-                  {Array.from({ length: 5 }).map((_, index) => (
-                    <Star key={`${name}-${index}`} size={15} fill="currentColor" />
-                  ))}
-                </div>
-                <p className="quote">“{quote}”</p>
-                <div className="person">
-                  <div className="avatar">{name.charAt(0)}</div>
-                  <div>
-                    <strong>{name}</strong>
-                    <span>{role}</span>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="section cta-banner">
-          <div className="cta-panel">
-            <div>
-              <span className="eyebrow dark">Ready to launch</span>
-              <h2>Build a digital archive your clients will remember.</h2>
-            </div>
-            <button type="button" className="primary-btn large-btn" onClick={handleBookDemo}>
-              Start your project
-              <ArrowRight size={18} />
-            </button>
-          </div>
-        </section>
-      </main>
-
-      <footer className="footer">
-        <div className="brand small">
-          <span className="brand-mark">
-            <Droplets size={16} />
-          </span>
-          Liquid Archive
-        </div>
-        <div className="footer-links">
-          <a href="#features">Features</a>
-          <a href="#pricing">Pricing</a>
-          <a href="#reviews">Reviews</a>
-        </div>
-      </footer>
-
-      {demoOpen && (
-        <div className="demo-modal-backdrop" onClick={() => setDemoOpen(false)}>
-          <div className="demo-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
-            <button type="button" className="demo-close-button" aria-label="Close demo video" onClick={() => setDemoOpen(false)}>
-              ×
-            </button>
-            <div className="demo-modal-frame">
-              <iframe
-                src={demoVideoUrl}
-                title="Liquid Archive product demo"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-              />
-            </div>
+            {step === 'orders' && (orders.length === 0 ? <div className="empty">Hali buyurtma yo‘q.</div> : orders.map(o => (
+              <div className="item" key={o.no} style={{ gridTemplateColumns: '1fr' }}>
+                <div className="row"><b>{o.no}</b><span style={{ fontSize: '.75rem', color: 'var(--mut)' }}>{o.date}</span></div>
+                <div style={{ fontSize: '.78rem', color: 'var(--mut)', lineHeight: 1.7 }}>{o.items.map(t => <div key={t}>{t}</div>)}</div>
+                <div className="row"><span style={{ fontSize: '.78rem' }}>{o.count} ta mahsulot</span><b>{money(o.total)}</b></div>
+              </div>
+            )))}
           </div>
         </div>
       )}
+
+      {toast && <div className="toast" role="status">{toast}</div>}
     </div>
   )
 }
-
-export default App

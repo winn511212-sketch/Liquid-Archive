@@ -1,46 +1,16 @@
-# Liquid Archive
+# React + Vite
 
-Liquid Archive is a premium landing page for a digital asset management brand built with React and Vite. The design is tailored for creative agencies, studios and digital-first businesses that want a polished, premium online presence.
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-## Features
+Currently, two official plugins are available:
 
-- Modern luxury dark UI
-- Responsive landing page layout
-- Product preview dashboard mockup
-- Pricing, testimonials and CTA sections
-- GitHub Pages deployment setup
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-## Local development
+## React Compiler
 
-```bash
-npm install
-npm run dev
-```
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## Production build
+## Expanding the ESLint configuration
 
-```bash
-npm run build
-npm run preview
-```
-
-## GitHub setup
-
-1. Create a new repository on GitHub.
-2. In the project folder, run:
-
-```bash
-git init
-git branch -M main
-git add .
-git commit -m "Initial commit"
-git remote add origin <your-github-repository-url>
-git push -u origin main
-```
-
-3. In GitHub, enable GitHub Pages and choose GitHub Actions as the deployment source.
-4. The repository already includes a Pages deployment workflow in `.github/workflows/deploy.yml`.
-
-## Deployment
-
-This project is configured with a static deployment workflow for GitHub Pages. The build output is generated in the `dist` directory and deployed automatically on pushes to the `main` branch.
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
